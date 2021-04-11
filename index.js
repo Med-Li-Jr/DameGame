@@ -43,9 +43,9 @@ function showDash() {
             let col = dashArray[y][x];
             if ((y % 2 != 0 && x % 2 != 0) ||
                 (y % 2 == 0 && x % 2 == 0))
-                divsRowsPionsCreated.push(createPion(col, "white", [y, x], IdDivCreated))
+                divsRowsPionsCreated.push(createPion(col, "white", y, x, IdDivCreated))
             else
-                divsRowsPionsCreated.push(createPion(col, "black", [y, x], IdDivCreated))
+                divsRowsPionsCreated.push(createPion(col, "black", y, x, IdDivCreated))
 
             IdDivCreated++;
         }    
@@ -55,7 +55,7 @@ function showDash() {
 }
 
 
-function createPion(col, bkgColor, position, IdDivCreated) {
+function createPion(col, bkgColor, y, x, IdDivCreated) {
     let div = document.createElement("div");
     div.classList.add("myBox");
     div.classList.add("box-" + bkgColor)
@@ -67,7 +67,7 @@ function createPion(col, bkgColor, position, IdDivCreated) {
     //1 ==> red;;;; -1 ==> bron ;;;; 0 ==> empty
     if (col != SPACE_EMTPY) {
         div.addEventListener("click", () => {
-            pionClicked(col, ...position)
+            pionClicked(col,y,x)
         })
     }
     else
@@ -87,15 +87,14 @@ function createPion(col, bkgColor, position, IdDivCreated) {
     else {
         img.src = "./transparent.png";
     }
-    div.dataset.position_y = position[0];
-    div.dataset.position_x = position[1];
+    div.dataset.position_y = y;
+    div.dataset.position_x = x;
 
     div.appendChild(img);
     dashboardDiv.appendChild(div);
     return div;
 }
-
-function pionClicked(pion, y, x) {
+function showMovement(y, x, pion){
     let topL = null;
     let topR = null;
     let bottomL = null;
@@ -107,40 +106,26 @@ function pionClicked(pion, y, x) {
     let hasTop = hasBottom = hasRight = hasLeft = true;
 
 
-    if (x + 1 >= lengthY) {
+    let directionToMoves = []
+
+    if (y + 1 >= lengthY) {
         hasBottom = false;
-        // topL = dashArray[x-1][y-1]
-        // topR = dashArray[x-1][y+1]
-        // console.log("pas de bottom" + x);
     }
-    if (x - 1 < 0) {
+    if (y - 1 < 0) {
         hasTop = false;
-        // bottomL = dashArray[y + 1][y-1]
-        // bottomR = dashArray[y + 1][y+1]
-        // console.log("pas de top" + x);
     }
-    if (y + 1 >= lengthX) {
+    if (x + 1 >= lengthX) {
         hasRight = false;
-        // topL = dashArray[y - 1][y-1]
-        // bottomL = dashArray[y - 1][y+1]
-
-        // console.log("pas de right" + y);
-    } if (y - 1 < 0) {
+    } 
+    if (x - 1 < 0) {
         hasLeft = false;
-        // topR = dashArray[y - 1][y+1]
-        // bottomR = dashArray[y + 1][y+1]
-        // console.log("pas de left" + y);
     }
-
-
-
 
     if (hasLeft) {
         if (hasTop) {
             topL = dashArray[y - 1][x - 1]
         } 
         if (hasBottom) {
-
             bottomL = dashArray[y + 1][x - 1]
         }
     }
@@ -154,10 +139,87 @@ function pionClicked(pion, y, x) {
         }
     }
 
+
+    if(topL != null){
+        if(pion === PION_BRON){
+            // console.log(pion + " // " + x + y + " must be topL " + PION_BRON)
+            if(topL == SPACE_EMTPY){
+                directionToMoves.push([y - 1, x - 1])
+                console.log(dashArray[y - 2][x - 2], "-----------")
+            }
+            else if( topL != pion){
+                if(x - 2 >= 0 && y - 2 >= 0 
+                && dashArray[y - 2][x - 2] === SPACE_EMTPY){
+                    directionToMoves.push([y - 2, x - 2])
+                    directionToMoves.push(showMovement(y - 2, x - 2, pion))
+                }
+            }    
+        }
+    }
+
+    if(topR != null){
+        if(pion === PION_BRON){
+            // console.log(pion + " must be topR " + PION_BRON)
+            if(topR == SPACE_EMTPY){
+                directionToMoves.push([y - 1, x + 1])
+            }
+            else if( topR != pion){
+                if(x + 2 < lengthX && y - 2 >= 0 
+                && dashArray[y - 2][x + 2] === SPACE_EMTPY){
+                    directionToMoves.push([y - 2, x + 2])
+                    directionToMoves.push(showMovement(y - 2, x + 2, pion))
+                }
+            }
+    
+        }
+    }
+
+    if(bottomL != null){
+        if(pion === PION_RED){
+            // console.log(pion + " must be bottomL " + PION_RED)
+            if(bottomL == SPACE_EMTPY){
+                directionToMoves.push([y + 1, x - 1])
+            }
+            else if( bottomL != pion){
+                if(x - 2 >= 0 && y + 2 < lengthY  
+                && dashArray[y + 2][x - 2] === SPACE_EMTPY){
+                    directionToMoves.push([y + 2, x - 2])
+                    directionToMoves.push(showMovement(y + 2, x - 2, pion))
+                }
+            }    
+        }
+
+    }
+
+    if(bottomR != null){
+        if(pion == PION_RED){
+            // console.log(pion + " must be bottomR " + PION_RED)
+            if(bottomR == SPACE_EMTPY){
+                directionToMoves.push([y + 1, x + 1])
+            }
+            else if( bottomR != pion){
+                if(x + 2 < lengthX && y + 2 < lengthY  
+                && dashArray[y + 2][x + 2] === SPACE_EMTPY){
+                    directionToMoves.push([y + 2, x + 2])
+                    directionToMoves.push(showMovement(y + 2, x + 2, pion))
+                }
+            }    
+        }
+    }
+    return directionToMoves;
+
+}
+function pionClicked(pion, y, x) {
+    let topL = null;
+    let topR = null;
+    let bottomL = null;
+    let bottomR = null;
+    
+
+
     clearSelection()
     let directionToMoves = ""
-
-    if (topR != null && topR == SPACE_EMTPY) {
+/*if (topR != null && topR == SPACE_EMTPY) {
         if (pion == PION_BRON) {
             allDivDashArray[y - 1][x + 1].classList.add("box_possibe")
             directionToMoves += "upR "
@@ -167,7 +229,7 @@ function pionClicked(pion, y, x) {
         allDivDashArray[y - 2][x + 2].classList.add("box_possibe")
         directionToMoves += "TookUpR "
     }
-
+    console.log(topL, pion, SPACE_EMTPY)
     if (topL != null && topL == SPACE_EMTPY) {
         if (pion == PION_BRON) {
             allDivDashArray[y - 1][x - 1].classList.add("box_possibe")
@@ -189,7 +251,6 @@ function pionClicked(pion, y, x) {
         allDivDashArray[y + 2][x + 2].classList.add("box_possibe")
         directionToMoves += "TookDownR "
     }
-
     if (bottomL != null && bottomL == SPACE_EMTPY) {
         if (pion == PION_RED) {
             allDivDashArray[y + 1][x - 1].classList.add("box_possibe")
@@ -212,8 +273,14 @@ function pionClicked(pion, y, x) {
     {
 
     }
-    console.log(directionToMoves)
-    //console.log(allDivDashArray[x][y])
+    */
+    let result = showMovement(y, x, pion);
+    let auxR = result.flat(Infinity);
+    console.log(auxR, auxR.length)
+    for(let i = 0, j=0; i < auxR.length / 2; i++){
+        allDivDashArray[auxR[j]][auxR[j+1]].classList.add("box_possibe")
+        j+=2;
+    }
 }
 function colVideClicked(elt, color) {
     if (color === "black" && pionSelected != null) {
@@ -222,7 +289,7 @@ function colVideClicked(elt, color) {
         let position_y = elt.dataset.position_y;
 
         if (elt.classList.contains("box_possibe")) {
-            console.log(elt, position_x, position_y, dashArray, pionSelected)
+            
             let aux = dashArray[position_y][position_x] 
             dashArray[position_y][position_x] = dashArray[pionSelected.dataset.position_y][pionSelected.dataset.position_x]
             dashArray[pionSelected.dataset.position_y][pionSelected.dataset.position_x] = aux
